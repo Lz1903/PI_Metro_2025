@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:metro_2025_2/tela_inicial.dart';
+// ignore: unused_import
 import 'package:metro_2025_2/tela_login.dart';
-
 void main() {
   runApp(const LoginApp());
 }
@@ -12,7 +13,7 @@ class LoginApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TelaLogin(),
+      home: TelaInicial(),
     );
   }
 }
