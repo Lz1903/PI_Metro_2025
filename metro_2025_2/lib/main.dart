@@ -1,7 +1,7 @@
+// ignore_for_file: unused_import
+
 import 'package:flutter/material.dart';
-// ignore: unused_import
 import 'package:metro_2025_2/tela_inicial.dart';
-// ignore: unused_import
 import 'package:metro_2025_2/tela_login.dart';
 import 'package:metro_2025_2/tela_inicial_admin.dart';
 void main() {
@@ -15,7 +15,7 @@ class LoginApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TelaInicialAdmin(),
+      home: TelaInicial(),
     );
   }
 }
