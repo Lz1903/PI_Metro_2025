@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:metro_2025_2/tela_inicial.dart';
 
 class TelaLogin extends StatelessWidget{
   const TelaLogin({super.key});
@@ -19,7 +20,7 @@ class TelaLogin extends StatelessWidget{
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Cabeçalho
+
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -35,7 +36,7 @@ class TelaLogin extends StatelessWidget{
                 ),
               ),
 
-              // Faixa colorida
+
               Row(
                 children: const [
                   Expanded(child: ColoredBox(color: Colors.blue, child: SizedBox(height: 8))),
@@ -48,7 +49,7 @@ class TelaLogin extends StatelessWidget{
 
               const SizedBox(height: 24),
 
-              // Campo Usuário
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
@@ -69,7 +70,7 @@ class TelaLogin extends StatelessWidget{
 
               const SizedBox(height: 16),
 
-              // Campo Senha
+              
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
@@ -91,7 +92,6 @@ class TelaLogin extends StatelessWidget{
 
               const SizedBox(height: 24),
 
-              // Botão Entrar
               SizedBox(
                 width: 180,
                 height: 45,
@@ -102,7 +102,12 @@ class TelaLogin extends StatelessWidget{
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => TelaInicial()),
+                    );
+                  },
                   child: const Text(
                     "ENTRAR",
                     style: TextStyle(

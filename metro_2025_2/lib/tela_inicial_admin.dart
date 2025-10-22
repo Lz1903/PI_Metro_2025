@@ -33,169 +33,151 @@ class TelaInicialAdmin extends StatelessWidget {
       drawer: const Drawer(backgroundColor: Color(0xFF1A1780)),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final bool isMobile = constraints.maxWidth < 600;
 
           return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Padding(
+            child: Column(
+              children: [
+                Padding(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        flex: 2,
-                        child: Flex(
-                          direction: isMobile ? Axis.vertical : Axis.horizontal,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                margin: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.black12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    const Text(
-                                      'Bem-vindo  Admin',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1A1780),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Container(
-                                margin: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1A1780),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    "Visualizar estoque",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Expanded(
-                        flex: 2,
-                        child: Flex(
-                          direction: isMobile ? Axis.vertical : Axis.horizontal,
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                margin: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.black12),
-                                ),
-                                child: const Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children:[ Text(
-                                    "Relatórios e gráficos",
-                                    style: TextStyle(
-                                      color: Color(0xFF1A1780),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      margin: const EdgeInsets.all(8),
-                                      height: 200,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1A1780),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Center(
-                                        child: Text(
-                                          "Retirada",
-                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Container(
-                                      margin: const EdgeInsets.all(8),
-                                      height: 200,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1A1780),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Center(
-                                        child: Text(
-                                          "Devolução",
-                                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      Expanded(
-                        flex: 1,
-                        child: Container(
-                          margin: const EdgeInsets.all(8),
-                          padding: const EdgeInsets.all(16),
-                          width: double.infinity,
+                        child:Container(
+                          height: constraints.maxHeight * 0.3,
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.black12),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey.shade300),
                           ),
-                          child: const Column(
-                            children: [
-                              Text(
-                              "Retiradas Recentes",
-                              style: TextStyle(
-                                color: Color(0xFF1A1780),
-                                fontWeight: FontWeight.w500,
-                              ),
-                              ),
-                            ],
+                          padding: EdgeInsets.all(8),
+                          child: Text("Bem-vindo Admin",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                            color: Color(0xFF1A1780),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            ),
+                          ),
+                        ), 
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        height: constraints.maxHeight * 0.2,
+                        width: constraints.maxWidth * 0.3,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1A1780),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Visualizar estoque',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+                const SizedBox(height: 5),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: Container(
+                        height: constraints.maxHeight * 0.3,
+                        decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          padding: EdgeInsets.all(8),
+                          child: Text("Relatórios e gráficos",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                            color: Color(0xFF1A1780),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            ),
+                          ),
+                      ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        height: constraints.maxHeight * 0.2,
+                        width: constraints.maxWidth * 0.2,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1A1780),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Retirada',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        height: constraints.maxHeight * 0.2,
+                        width: constraints.maxWidth * 0.2,
+                        child: ElevatedButton(
+                          onPressed: () {},
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1A1780),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Devolução',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(padding: const EdgeInsets.all(16),
+                  child:Container(
+                    height: constraints.maxHeight * 0.25,
+                    width: constraints.maxWidth,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    padding: EdgeInsets.all(8),
+                    child: Text("Retiradas Recentes",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF1A1780),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
