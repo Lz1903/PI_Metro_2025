@@ -1,4 +1,8 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:flutter/material.dart';
+import 'package:auto_size_text/auto_size_text.dart';
+
 
 class TelaInicial extends StatelessWidget {
   const TelaInicial({super.key});
@@ -32,6 +36,8 @@ class TelaInicial extends StatelessWidget {
       ),
       drawer: const Drawer(backgroundColor: Color(0xFF1A1780)),
       body: LayoutBuilder(builder: (context, constraints) {
+        double width = constraints.maxWidth;
+        bool isMobile = width < 450;
       return SingleChildScrollView(
       child:Column(
         children:[ 
@@ -46,13 +52,17 @@ class TelaInicial extends StatelessWidget {
                   border: Border.all(color: Colors.grey.shade200, width: 2.0)
                 ),
                 padding: EdgeInsets.all(8),
-                child: Text("Bem-vindo usuário",
+                child: AutoSizeText("Bem-vindo usuário",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Color(0xFF1A1780),
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
+                maxLines: 2,
+                minFontSize: 5,
+                stepGranularity: 0.1,
+                wrapWords: false,
                 ),
               ),           
           ),
@@ -73,12 +83,17 @@ class TelaInicial extends StatelessWidget {
                       padding: const EdgeInsets.all(8),
                       child: Column(
                         children: [
-                          const Text('Histórico de retiradas',
+                          const AutoSizeText('Histórico de retiradas',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Color(0xFF1A1780),
                             fontWeight: FontWeight.bold,
                             fontSize: 20,
                           ),
+                          maxLines: 3,
+                          minFontSize: 5,
+                          stepGranularity: 0.1,
+                          wrapWords: false,
                           ),
                         ],
                       ),
@@ -90,7 +105,7 @@ class TelaInicial extends StatelessWidget {
                     children: [
                       SizedBox(
                         height: constraints.maxHeight * 0.2,
-                        width: constraints.maxWidth * 0.2,
+                        width: isMobile ? constraints.maxWidth * 0.4 : constraints.maxWidth * 0.2,
                         child: ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
@@ -99,20 +114,24 @@ class TelaInicial extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text(
+                          child: const AutoSizeText(
                             'Retirada',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
+                            maxLines: 1,
+                            minFontSize: 5,
+                            stepGranularity: 0.1,
+                            wrapWords: false,
                           ),
                         ),
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
                         height: constraints.maxHeight * 0.2,
-                        width: constraints.maxWidth * 0.2,
+                        width: isMobile ? constraints.maxWidth * 0.4 : constraints.maxWidth * 0.2,
                         child: ElevatedButton(
                           onPressed: () {},
                           style: ElevatedButton.styleFrom(
@@ -121,13 +140,17 @@ class TelaInicial extends StatelessWidget {
                               borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          child: const Text(
+                          child: const AutoSizeText(
                             'Devolução',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
+                            maxLines: 1,
+                            minFontSize: 5,
+                            stepGranularity: 0.1,
+                            wrapWords: false,
                           ),
                         ),
                       ),
