@@ -2,10 +2,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:metro_2025_2/tela_cadastro_material.dart';
+import 'package:metro_2025_2/tela_estoque.dart';
+import 'tela_perfil.dart';
 
-
-class TelaInicialAdmin extends StatelessWidget {
+class TelaInicialAdmin extends StatefulWidget {
   const TelaInicialAdmin({super.key});
+
+  @override
+  State<TelaInicialAdmin> createState() => _TelaInicialAdmin();
+}
+
+class _TelaInicialAdmin extends State<TelaInicialAdmin> {
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +42,42 @@ class TelaInicialAdmin extends StatelessWidget {
           ),
         ),
       ),
-      drawer: const Drawer(backgroundColor: Color(0xFF1A1780)),
+      drawer: Drawer(
+        backgroundColor: Color(0xFF1A1780),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.account_circle, color: Colors.white,),
+              title: const Text('Perfil', style: TextStyle(color: Colors.white),),
+              onTap: () {
+                setState(() {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TelaPerfil()));
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.house_rounded, color: Colors.white,),
+              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
+              onTap: () {
+                setState(() {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TelaInicialAdmin()));
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings, color: Colors.white,),
+              title: const Text('Configurações', style: TextStyle(color: Colors.white),),
+              onTap: () {
+              },
+            ),
+          ],
+        ),
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           double width = constraints.maxWidth;
@@ -71,7 +114,11 @@ class TelaInicialAdmin extends StatelessWidget {
                     height: constraints.maxHeight * 0.09,
                     width: constraints.maxWidth,
                     child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                        Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => TelaEstoque()));
+                    },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1A1780),
                         shape: RoundedRectangleBorder(
@@ -95,45 +142,17 @@ class TelaInicialAdmin extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-                Row(
-                  children: [
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal:16),
                       child: SizedBox(
-                        height: constraints.maxHeight * 0.15,
-                        width: constraints.maxWidth * 0.4,
+                        height: constraints.maxHeight * 0.1,
+                        width: constraints.maxWidth,
                         child: ElevatedButton(
-                          onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1A1780),
-                          shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const AutoSizeText(
-                          'Edição de Materiais',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                            maxLines: 3,
-                            minFontSize: 5,
-                            stepGranularity: 0.1,
-                            wrapWords: false,
-                        ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal:10),
-                      child: SizedBox(
-                        height: constraints.maxHeight * 0.15,
-                        width: constraints.maxWidth * 0.4,
-                        child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => TelaCadastroMaterial()));
+                          },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1A1780),
                           shape: RoundedRectangleBorder(
@@ -152,11 +171,9 @@ class TelaInicialAdmin extends StatelessWidget {
                             minFontSize: 5,
                             stepGranularity: 0.1,
                             wrapWords: false,
-                        ),
-                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 15),
                 Padding(
@@ -246,7 +263,11 @@ class TelaInicialAdmin extends StatelessWidget {
                         height: constraints.maxHeight * 0.3,
                         width: constraints.maxWidth * 0.3,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => TelaEstoque()));
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A1780),
                             shape: RoundedRectangleBorder(
@@ -300,7 +321,11 @@ class TelaInicialAdmin extends StatelessWidget {
                         height: constraints.maxHeight * 0.3,
                         width: constraints.maxWidth * 0.2,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => TelaCadastroMaterial()));
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A1780),
                             shape: RoundedRectangleBorder(
@@ -308,38 +333,13 @@ class TelaInicialAdmin extends StatelessWidget {
                             ),
                           ),
                           child: const AutoSizeText(
-                            'Retirada',
+                            'Cadastro de Materiais',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
-                            maxLines: 1,
-                            minFontSize: 5,
-                            stepGranularity: 0.1,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        height: constraints.maxHeight * 0.3,
-                        width: constraints.maxWidth * 0.2,
-                        child: ElevatedButton(
-                          onPressed: () {},
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A1780),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: const AutoSizeText(
-                            'Devolução',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                            maxLines: 1,
+                            maxLines: 3,
                             minFontSize: 5,
                             stepGranularity: 0.1,
                           ),

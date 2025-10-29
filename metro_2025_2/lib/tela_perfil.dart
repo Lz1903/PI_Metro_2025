@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'tela_inicial.dart';
-import 'tela_perfil.dart';
 
-class TelaDevolucao extends StatefulWidget{
-  const TelaDevolucao({super.key});
+class TelaPerfil extends StatefulWidget{
+  const TelaPerfil({super.key});
 
   @override
-  State<TelaDevolucao> createState() => _TelaDevolucao();
+  State<TelaPerfil> createState() => _TelaPerfil();
 }
-class _TelaDevolucao extends State<TelaDevolucao> {
+class _TelaPerfil extends State<TelaPerfil> {
   
   @override
   Widget build(BuildContext context) {
@@ -43,17 +42,6 @@ class _TelaDevolucao extends State<TelaDevolucao> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             ListTile(
-              leading: const Icon(Icons.account_circle, color: Colors.white,),
-              title: const Text('Perfil', style: TextStyle(color: Colors.white),),
-              onTap: () {
-                setState(() {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TelaPerfil()));
-                });
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.house_rounded, color: Colors.white,),
               title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
               onTap: () {
@@ -77,23 +65,13 @@ class _TelaDevolucao extends State<TelaDevolucao> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 10),
-          const Center(
+          Center(
             child: Text(
-              "Devolução",
+              "Perfil",
               style: TextStyle(
+                fontSize: 24,
                 color: Color(0xFF1A1780),
                 fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Center(
-            child: Text(
-              "Nenhum item retirado no momento",
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
               ),
             ),
           ),

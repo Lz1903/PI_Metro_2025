@@ -2,7 +2,8 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:metro_2025_2/TelaTestes.dart';
+import 'package:metro_2025_2/tela_testes.dart';
+import 'package:metro_2025_2/tela_cadastro_material.dart';
 import 'package:metro_2025_2/tela_inicial.dart';
 import 'package:metro_2025_2/tela_login.dart';
 import 'package:metro_2025_2/tela_inicial_admin.dart';
@@ -20,7 +21,7 @@ class LoginApp extends StatelessWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TelaLogin(),
+      home: TelaInicialAdmin(),
     );
   }
 }

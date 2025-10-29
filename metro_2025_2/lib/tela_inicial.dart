@@ -2,10 +2,19 @@
 
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:metro_2025_2/tela_devolucao.dart';
+import 'package:metro_2025_2/tela_perfil.dart';
+import 'package:metro_2025_2/tela_retirada.dart';
 
 
-class TelaInicial extends StatelessWidget {
+class TelaInicial extends StatefulWidget {
   const TelaInicial({super.key});
+
+  @override
+  State<TelaInicial> createState() => _TelaInicial();
+}
+class _TelaInicial extends State<TelaInicial> {
+  
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +26,11 @@ class TelaInicial extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => TelaPerfil()));
+            },
             icon: const Icon(Icons.account_circle_rounded, color: Colors.white),
           ),
         ],
@@ -34,13 +47,46 @@ class TelaInicial extends StatelessWidget {
           ),
         ),
       ),
-      drawer: const Drawer(backgroundColor: Color(0xFF1A1780)),
+      drawer: Drawer(
+        backgroundColor: Color(0xFF1A1780),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.account_circle, color: Colors.white,),
+              title: const Text('Perfil', style: TextStyle(color: Colors.white),),
+              onTap: () {
+                Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => TelaPerfil()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.house_rounded, color: Colors.white,),
+              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
+              onTap: () {
+                setState(() {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TelaInicial()));
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings, color: Colors.white,),
+              title: const Text('Configurações', style: TextStyle(color: Colors.white),),
+              onTap: () {
+              },
+            ),
+          ],
+        ),
+      ),
       body: LayoutBuilder(builder: (context, constraints) {
         double width = constraints.maxWidth;
         bool isMobile = width < 450;
       return SingleChildScrollView(
       child:Column(
-        children:[ 
+        children:[
           Padding(
             padding: EdgeInsetsGeometry.all(8),
               child: Container(
@@ -49,7 +95,7 @@ class TelaInicial extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade200, width: 2.0)
+                  border: Border.all(color: Colors.grey.shade200, width: 2.0),
                 ),
                 padding: EdgeInsets.all(8),
                 child: AutoSizeText("Bem-vindo usuário",
@@ -107,7 +153,11 @@ class TelaInicial extends StatelessWidget {
                         height: constraints.maxHeight * 0.2,
                         width: isMobile ? constraints.maxWidth * 0.4 : constraints.maxWidth * 0.2,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => TelaRetirada()));
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A1780),
                             shape: RoundedRectangleBorder(
@@ -133,7 +183,11 @@ class TelaInicial extends StatelessWidget {
                         height: constraints.maxHeight * 0.2,
                         width: isMobile ? constraints.maxWidth * 0.4 : constraints.maxWidth * 0.2,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => TelaDevolucao()));
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A1780),
                             shape: RoundedRectangleBorder(

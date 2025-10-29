@@ -2,18 +2,20 @@
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:metro_2025_2/tela_edicao_material.dart';
+import 'package:metro_2025_2/tela_inicial_admin.dart';
 import 'package:metro_2025_2/tela_perfil.dart';
 import 'tela_comfirmacao_retirada.dart';
 import 'package:metro_2025_2/tela_inicial.dart';
 
-class TelaRetirada extends StatefulWidget{
-  const TelaRetirada({super.key});
+class TelaEstoque extends StatefulWidget{
+  const TelaEstoque({super.key});
 
   @override
-  State<TelaRetirada> createState() => _TelaRetiradaState();
+  State<TelaEstoque> createState() => _TelaEstoque();
 }
 
-class _TelaRetiradaState extends State<TelaRetirada> {
+class _TelaEstoque extends State<TelaEstoque> {
   bool isMaterialSelecionado = true;
   String searchQuery = "";
 
@@ -88,7 +90,7 @@ class _TelaRetiradaState extends State<TelaRetirada> {
                 setState(() {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => TelaInicial()));
+                    MaterialPageRoute(builder: (context) => TelaInicialAdmin()));
                 });
               },
             ),
@@ -109,7 +111,7 @@ class _TelaRetiradaState extends State<TelaRetirada> {
 
           const Center(
             child: Text(
-              "Retirada",
+              "Estoque",
               style: TextStyle(
                 color: Color(0xFF1A1780),
                 fontWeight: FontWeight.bold,
@@ -247,7 +249,7 @@ class _TelaRetiradaState extends State<TelaRetirada> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TelaConfirmacaoRetirada(item: item),
+                          builder: (context) => TelaEdicaoMaterial(item: item),
                         ),
                       );
                     }
