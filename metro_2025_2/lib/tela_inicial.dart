@@ -6,6 +6,8 @@ import 'package:metro_2025_2/tela_devolucao.dart';
 import 'package:metro_2025_2/tela_perfil.dart';
 import 'package:metro_2025_2/tela_retirada.dart';
 
+import 'tela_inicial_admin.dart';
+
 
 class TelaInicial extends StatefulWidget {
   const TelaInicial({super.key});
@@ -69,6 +71,17 @@ class _TelaInicial extends State<TelaInicial> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => TelaInicial()));
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.house_rounded, color: Colors.white,),
+              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
+              onTap: () {
+                setState(() {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TelaInicialAdmin()));
                 });
               },
             ),

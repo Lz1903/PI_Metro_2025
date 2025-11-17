@@ -2,44 +2,73 @@
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:metro_2025_2/tela_edicao_material.dart';
-import 'package:metro_2025_2/tela_inicial_admin.dart';
-import 'package:metro_2025_2/tela_perfil.dart';
-import 'tela_comfirmacao_retirada.dart';
-import 'package:metro_2025_2/tela_inicial.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'tela_edicao_material.dart';
+import 'tela_inicial_admin.dart';
+import 'tela_perfil.dart';
 
-class TelaEstoque extends StatefulWidget{
+class TelaEstoque extends StatefulWidget {
   const TelaEstoque({super.key});
 
   @override
-  State<TelaEstoque> createState() => _TelaEstoque();
+  State<TelaEstoque> createState() => _TelaEstoqueState();
 }
 
-class _TelaEstoque extends State<TelaEstoque> {
+class _TelaEstoqueState extends State<TelaEstoque> {
   bool isMaterialSelecionado = true;
   String searchQuery = "";
+  bool carregando = true;
+  List<dynamic> materiais = [];
+  List<dynamic> instrumentos = [];
 
-  final List<Map<String, dynamic>> materiais = [
-    {"nome": "Cabo HDMI", "codigo": "MAT-001", "saldo": 12, "base": "ABC"},
-    {"nome": "Fonte 12V", "codigo": "MAT-002", "saldo": 8, "base": "XYZ"},
-    {"nome": "Adaptador", "codigo": "MAT-003", "saldo": 5, "base": "DEF"},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    carregarDados();
+  }
 
-  final List<Map<String, dynamic>> instrumentos = [
-    {"nome": "Multímetro", "codigo": "INS-001", "saldo": 3, "base": "ABC"},
-    {"nome": "Lanterna", "codigo": "INS-002", "saldo": 7, "base": "XYZ"},
-    {"nome": "Alinhador Lazer", "codigo": "INS-003", "saldo": 2, "base": "DEF"},
-  ];
+  Future<void> carregarDados() async {
+    setState(() => carregando = true);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("access_token");
+
+    final url = isMaterialSelecionado
+        ? Uri.parse("http://127.0.0.1:8000/pedidos/listar_materiais")
+        : Uri.parse("http://127.0.0.1:8000/pedidos/listar_instrumentos");
+
+    final response = await http.get(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (response.statusCode == 200) {
+      final dados = jsonDecode(response.body);
+      setState(() {
+        if (isMaterialSelecionado) {
+          materiais = dados;
+        } else {
+          instrumentos = dados;
+        }
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao carregar dados: ${response.body}")),
+      );
+    }
+
+    setState(() => carregando = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final listaAtual = isMaterialSelecionado ? materiais : instrumentos;
-
     final listaFiltrada = listaAtual.where((item) {
       final nome = item['nome'].toString().toLowerCase();
-      final codigo = item['codigo'].toString().toLowerCase();
+      final id = item['id'].toString().toLowerCase();
       final query = searchQuery.toLowerCase();
-      return nome.contains(query) || codigo.contains(query);
+      return nome.contains(query) || id.contains(query);
     }).toList();
 
     return Scaffold(
@@ -50,8 +79,8 @@ class _TelaEstoque extends State<TelaEstoque> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            onPressed: () {}, 
-            icon: const Icon(Icons.account_circle_rounded, color: Colors.white),
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: carregarDados,
           ),
         ],
         bottom: PreferredSize(
@@ -67,199 +96,120 @@ class _TelaEstoque extends State<TelaEstoque> {
           ),
         ),
       ),
-      drawer: Drawer(
-        backgroundColor: Color(0xFF1A1780),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.account_circle, color: Colors.white,),
-              title: const Text('Perfil', style: TextStyle(color: Colors.white),),
-              onTap: () {
-                setState(() {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TelaPerfil()));
-                });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.house_rounded, color: Colors.white,),
-              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
-              onTap: () {
-                setState(() {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TelaInicialAdmin()));
-                });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings, color: Colors.white,),
-              title: const Text('Configurações', style: TextStyle(color: Colors.white),),
-              onTap: () {
-                
-              },
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-
-          const Center(
-            child: Text(
-              "Estoque",
-              style: TextStyle(
-                color: Color(0xFF1A1780),
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+      body: carregando
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 45,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          isMaterialSelecionado = true;
-                          searchQuery = "";
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isMaterialSelecionado
-                          ? const Color(0xFF1A1780)
-                          : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFF1A1780)),
+                const SizedBox(height: 15),
+                Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(child: Text(
+                "Estoque",
+                style: TextStyle(
+                  color: Color(0xFF1A1780),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28,
+                ),
+                ),
+                ),
+                ),
+                const SizedBox(height: 15),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              isMaterialSelecionado = true;
+                            });
+                            carregarDados();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isMaterialSelecionado ? const Color(0xFF1A1780) : Colors.white,
+                            side: const BorderSide(color: Color(0xFF1A1780)),
+                          ),
+                          child: Text(
+                            "Materiais",
+                            style: TextStyle(
+                                color: isMaterialSelecionado ? Colors.white : const Color(0xFF1A1780)),
+                          ),
                         ),
                       ),
-                      child: AutoSizeText(
-                        "Material",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: isMaterialSelecionado
-                            ? Colors.white
-                            : const Color(0xFF1A1780),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              isMaterialSelecionado = false;
+                            });
+                            carregarDados();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: !isMaterialSelecionado ? const Color(0xFF1A1780) : Colors.white,
+                            side: const BorderSide(color: Color(0xFF1A1780)),
+                          ),
+                          child: Text(
+                            "Instrumentos",
+                            style: TextStyle(
+                                color: !isMaterialSelecionado ? Colors.white : const Color(0xFF1A1780)),
+                          ),
                         ),
-                        maxLines: 1,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    onChanged: (value) => setState(() => searchQuery = value),
+                    decoration: InputDecoration(
+                      hintText: "Buscar por nome ou Código",
+                      prefixIcon: const Icon(Icons.search, color: Color(0xFF1A1780)),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF1A1780)),
+                        borderRadius: BorderRadius.all(Radius.circular(25)),
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Color(0xFF1A1780)),
+                        borderRadius: BorderRadius.all(Radius.circular(25)),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(height: 10),
                 Expanded(
-                  child: SizedBox(
-                    height: 45,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          isMaterialSelecionado = false;
-                          searchQuery = "";
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: !isMaterialSelecionado
-                          ? const Color(0xFF1A1780)
-                          : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadiusGeometry.circular(10),
-                          side: const BorderSide(color: Color(0xFF1A1780)),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: listaFiltrada.length,
+                    itemBuilder: (context, index) {
+                      final item = listaFiltrada[index];
+                      return Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: ListTile(
+                          title: Text(
+                            item['nome'],
+                            style: const TextStyle(
+                                color: Color(0xFF1A1780), fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text("Código: ${item['id']}  •  Status: ${item['status'] ?? '—'}"),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TelaEdicaoMaterial(item: item),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                      child: AutoSizeText(
-                        "Instrumento",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: !isMaterialSelecionado
-                            ? Colors.white
-                            : const Color(0xFF1A1780),
-                        ),
-                        maxLines: 1,
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: "Buscar por nome ou código",
-                hintStyle: const TextStyle(color: Color(0xFF1A1780)),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF1A1780)),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF1A1780)),
-                  borderRadius: BorderRadius.all(Radius.circular(25)),
-                ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF1A1780)),
-                  borderRadius: BorderRadius.all(Radius.circular(25)),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: listaFiltrada.length,
-              itemBuilder: (context, index) {
-                final item = listaFiltrada[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      item['nome'],
-                      style: const TextStyle(
-                        color: Color(0xFF1A1780),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Text(
-                      item['codigo'],
-                      style: const TextStyle(color: Color(0xFF1A1780)),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TelaEdicaoMaterial(item: item),
-                        ),
-                      );
-                    }
-                  ),
-                );
-              }
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

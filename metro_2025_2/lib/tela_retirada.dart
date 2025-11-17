@@ -1,12 +1,11 @@
-// ignore_for_file: unused_import
-
-import 'package:auto_size_text/auto_size_text.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:metro_2025_2/tela_perfil.dart';
-import 'tela_comfirmacao_retirada.dart';
-import 'package:metro_2025_2/tela_inicial.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'tela_inicial.dart';
+import 'tela_perfil.dart';
 
-class TelaRetirada extends StatefulWidget{
+class TelaRetirada extends StatefulWidget {
   const TelaRetirada({super.key});
 
   @override
@@ -17,28 +16,173 @@ class _TelaRetiradaState extends State<TelaRetirada> {
   bool isMaterialSelecionado = true;
   String searchQuery = "";
 
-  final List<Map<String, dynamic>> materiais = [
-    {"nome": "Cabo HDMI", "codigo": "MAT-001", "saldo": 12, "base": "ABC"},
-    {"nome": "Fonte 12V", "codigo": "MAT-002", "saldo": 8, "base": "XYZ"},
-    {"nome": "Adaptador", "codigo": "MAT-003", "saldo": 5, "base": "DEF"},
-  ];
+  List<Map<String, dynamic>> materiais = [];
+  List<Map<String, dynamic>> instrumentos = [];
 
-  final List<Map<String, dynamic>> instrumentos = [
-    {"nome": "Multímetro", "codigo": "INS-001", "saldo": 3, "base": "ABC"},
-    {"nome": "Lanterna", "codigo": "INS-002", "saldo": 7, "base": "XYZ"},
-    {"nome": "Alinhador Lazer", "codigo": "INS-003", "saldo": 2, "base": "DEF"},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    fetchItens();
+  }
+
+  Future<void> fetchItens() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("access_token");
+
+    final url = Uri.parse(
+      isMaterialSelecionado
+          ? "http://127.0.0.1:8000/pedidos/listar_materiais"
+          : "http://127.0.0.1:8000/pedidos/listar_instrumentos",
+    );
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+
+        setState(() {
+          if (isMaterialSelecionado) {
+            materiais = List<Map<String, dynamic>>.from(data);
+          } else {
+            instrumentos = List<Map<String, dynamic>>.from(data);
+          }
+        });
+      } else {
+        print('Erro ao carregar itens: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Erro de conexão: $e');
+    }
+  }
+
+  // ==========================================================
+  // RETIRADA DE MATERIAL
+  // ==========================================================
+
+  void abrirDialogRetirada(Map<String, dynamic> item) {
+    final TextEditingController qtdController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Retirar ${item['nome']}"),
+          content: TextField(
+            controller: qtdController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: "Quantidade a retirar",
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                retirarMaterial(item, qtdController.text.trim());
+              },
+              child: const Text("Confirmar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> retirarMaterial(Map<String, dynamic> item, String qtdStr) async {
+    Navigator.pop(context); // fecha o dialog
+
+    final quantidade = int.tryParse(qtdStr);
+    if (quantidade == null || quantidade <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Quantidade inválida")),
+      );
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("access_token");
+
+    final id = item["id"]; 
+
+    final url = Uri.parse(
+      "http://127.0.0.1:8000/pedidos/retirar_material/$id/$quantidade",
+    );
+
+    final response = await http.put(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Retirada concluída! Novo saldo: ${data["novo_saldo"]}",
+          ),
+        ),
+      );
+      fetchItens();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data["detail"] ?? "Erro ao retirar")),
+      );
+    }
+  }
+
+  // ==========================================================
+  // RETIRADA DE INSTRUMENTO (ALTERADO)
+  // ==========================================================
+
+  Future<void> retirarInstrumento(Map<String, dynamic> item) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("access_token");
+
+    final id = item["id"];
+
+    final url = Uri.parse(
+      "http://127.0.0.1:8000/pedidos/retirar_instrumento/$id",
+    );
+
+    final response = await http.put(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Instrumento retirado com sucesso!")),
+      );
+      fetchItens();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data["detail"] ?? "Erro ao retirar instrumento")),
+      );
+    }
+  }
+
+  // ==========================================================
 
   @override
   Widget build(BuildContext context) {
-    final listaAtual = isMaterialSelecionado ? materiais : instrumentos;
+    final listaItens =
+        isMaterialSelecionado ? materiais : instrumentos;
 
-    final listaFiltrada = listaAtual.where((item) {
-      final nome = item['nome'].toString().toLowerCase();
-      final codigo = item['codigo'].toString().toLowerCase();
-      final query = searchQuery.toLowerCase();
-      return nome.contains(query) || codigo.contains(query);
-    }).toList();
+    final itensFiltrados = listaItens
+        .where((item) =>
+            item['nome'].toString().toLowerCase().contains(searchQuery.toLowerCase()) ||
+            item['id'].toString().toLowerCase().contains(searchQuery.toLowerCase()))
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -46,218 +190,178 @@ class _TelaRetiradaState extends State<TelaRetirada> {
         backgroundColor: const Color(0xFF1A1780),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            onPressed: () {}, 
-            icon: const Icon(Icons.account_circle_rounded, color: Colors.white),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(10),
-          child: Row(
-            children: const [
-              Expanded(child: ColoredBox(color: Colors.blue, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.green, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.red, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.yellow, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.purple, child: SizedBox(height: 10))),
-            ],
-          ),
-        ),
       ),
       drawer: Drawer(
-        backgroundColor: Color(0xFF1A1780),
+        backgroundColor: const Color(0xFF1A1780),
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
             ListTile(
-              leading: const Icon(Icons.account_circle, color: Colors.white,),
-              title: const Text('Perfil', style: TextStyle(color: Colors.white),),
+              leading: const Icon(Icons.account_circle, color: Colors.white),
+              title: const Text('Perfil', style: TextStyle(color: Colors.white)),
               onTap: () {
-                setState(() {
-                  Navigator.push(
-                    context,
+                Navigator.push(context,
                     MaterialPageRoute(builder: (context) => TelaPerfil()));
-                });
               },
             ),
             ListTile(
-              leading: const Icon(Icons.house_rounded, color: Colors.white,),
-              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
+              leading: const Icon(Icons.house_rounded, color: Colors.white),
+              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white)),
               onTap: () {
-                setState(() {
-                  Navigator.push(
-                    context,
+                Navigator.push(context,
                     MaterialPageRoute(builder: (context) => TelaInicial()));
-                });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings, color: Colors.white,),
-              title: const Text('Configurações', style: TextStyle(color: Colors.white),),
-              onTap: () {
-                
               },
             ),
           ],
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
 
-          const Center(
-            child: Text(
-              "Retirada",
-              style: TextStyle(
-                color: Color(0xFF1A1780),
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
+      body: Column(
+        children: [
+          const SizedBox(height: 15),
+
+          const Text(
+            "Retirada",
+            style: TextStyle(
+              color: Color(0xFF1A1780),
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
             ),
           ),
-          const SizedBox(height: 20),
 
+          const SizedBox(height: 25),
+
+          // Material / Instrumento
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height: 45,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          isMaterialSelecionado = true;
-                          searchQuery = "";
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isMaterialSelecionado
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        isMaterialSelecionado = true;
+                        searchQuery = "";
+                      });
+                      fetchItens();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isMaterialSelecionado
                           ? const Color(0xFF1A1780)
-                          : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFF1A1780)),
-                        ),
-                      ),
-                      child: AutoSizeText(
-                        "Material",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: isMaterialSelecionado
-                            ? Colors.white
-                            : const Color(0xFF1A1780),
-                        ),
-                        maxLines: 1,
-                      ),
+                          : Colors.grey.shade400,
                     ),
+                    child: const Text("Material"),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: SizedBox(
-                    height: 45,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          isMaterialSelecionado = false;
-                          searchQuery = "";
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: !isMaterialSelecionado
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        isMaterialSelecionado = false;
+                        searchQuery = "";
+                      });
+                      fetchItens();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: !isMaterialSelecionado
                           ? const Color(0xFF1A1780)
-                          : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadiusGeometry.circular(10),
-                          side: const BorderSide(color: Color(0xFF1A1780)),
-                        ),
-                      ),
-                      child: AutoSizeText(
-                        "Instrumento",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: !isMaterialSelecionado
-                            ? Colors.white
-                            : const Color(0xFF1A1780),
-                        ),
-                        maxLines: 1,
-                      ),
+                          : Colors.grey.shade400,
                     ),
+                    child: const Text("Instrumento"),
                   ),
                 ),
               ],
             ),
           ),
+
           const SizedBox(height: 20),
+
+          // Busca
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-              },
               decoration: InputDecoration(
-                hintText: "Buscar por nome ou código",
-                hintStyle: const TextStyle(color: Color(0xFF1A1780)),
+                labelText: "Buscar por nome ou ID",
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF1A1780)),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF1A1780)),
-                  borderRadius: BorderRadius.all(Radius.circular(25)),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFF1A1780)),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF1A1780)),
-                  borderRadius: BorderRadius.all(Radius.circular(25)),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFF1A1780)),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
+              onChanged: (value) => setState(() => searchQuery = value),
             ),
           ),
-          const SizedBox(height: 10),
+
+          const SizedBox(height: 20),
+
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: listaFiltrada.length,
-              itemBuilder: (context, index) {
-                final item = listaFiltrada[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: ListTile(
-                    title: Text(
-                      item['nome'],
-                      style: const TextStyle(
+            child: itensFiltrados.isEmpty
+                ? const Center(
+                    child: Text(
+                      "Nenhum item encontrado",
+                      style: TextStyle(
                         color: Color(0xFF1A1780),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    subtitle: Text(
-                      item['codigo'],
-                      style: const TextStyle(color: Color(0xFF1A1780)),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TelaConfirmacaoRetirada(item: item),
+                  )
+                : ListView.builder(
+                    itemCount: itensFiltrados.length,
+                    itemBuilder: (context, index) {
+                      final item = itensFiltrados[index];
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 6),
+                        child: ListTile(
+                          title: Text(
+                            item["nome"],
+                            style: const TextStyle(
+                              color: Color(0xFF1A1780),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          // =====================================================
+                          // SUBTITLE (alterado apenas aqui)
+                          // =====================================================
+                          subtitle: Text(
+                            isMaterialSelecionado
+                                ? "ID: ${item['id']}  |  Saldo: ${item['quantidade']}"
+                                : "ID: ${item['id']}  |  Status: ${item['status']}",
+                          ),
+
+                          // =====================================================
+                          // ONTAP (alterado aqui)
+                          // =====================================================
+                          onTap: () {
+                            if (isMaterialSelecionado) {
+                              abrirDialogRetirada(item);
+                            } else {
+                              if (item["status"] == "Em uso") {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Este instrumento já está em uso."),
+                                  ),
+                                );
+                              } else {
+                                retirarInstrumento(item);
+                              }
+                            }
+                          },
                         ),
                       );
-                    }
+                    },
                   ),
-                );
-              }
-            ),
           ),
         ],
       ),
     );
   }
 }
+

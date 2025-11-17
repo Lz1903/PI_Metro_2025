@@ -1,10 +1,78 @@
-// ignore_for_file: unused_local_variable
+// ignore_for_file: unused_local_variable, unused_import
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:metro_2025_2/tela_inicial.dart';
+import 'package:metro_2025_2/tela_inicial_admin.dart';
 
-class TelaLogin extends StatelessWidget{
+class TelaLogin extends StatefulWidget{
   const TelaLogin({super.key});
+
+  @override
+  State<TelaLogin> createState() => _TelaLoginState();
+}
+
+class _TelaLoginState extends State<TelaLogin> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController senhaController = TextEditingController();
+  bool isLoading = false;
+
+  Future<void> fazerLogin() async {
+    setState(() => isLoading = true);
+
+    try {
+      final url = Uri.parse("http://127.0.0.1:8000/auth/login"); // use 10.0.2.2 no Android
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": emailController.text.trim(),
+          "senha": senhaController.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // salvar tokens e tipo de usuário localmente
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('access_token', data["access_token"]);
+        await prefs.setBool('is_admin', data["admin"]);
+        await prefs.setString('refresh_token', data["refresh_token"]);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Bem-vindo, ${data["nome"] ?? "usuário"}!")),
+        );
+
+        // redirecionar conforme o tipo de usuário
+        if (data["admin"] == true) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TelaInicialAdmin()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const TelaInicial()),
+          );
+        }
+      } else {
+        final error = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error["detail"] ?? "Erro no login")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro de conexão: $e")),
+      );
+    }
+
+    setState(() => isLoading = false);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +110,7 @@ class TelaLogin extends StatelessWidget{
               ),
             const SizedBox(height: 50),
             Padding(padding: const EdgeInsets.symmetric(horizontal: 25),
-            child: Text("Usuário",
+            child: Text("E-mail",
               style: TextStyle(
                 color: Color(0xFF1A1780),
                 fontWeight: FontWeight.bold,
@@ -53,6 +121,7 @@ class TelaLogin extends StatelessWidget{
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
                     labelText: "",
                     labelStyle: TextStyle(color: Color(0xFF1A1780)),
@@ -80,6 +149,7 @@ class TelaLogin extends StatelessWidget{
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: TextField(
+                controller: senhaController,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "",
@@ -107,12 +177,7 @@ class TelaLogin extends StatelessWidget{
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => TelaInicial()),
-                    );
-                  },
+                  onPressed: isLoading ? null : fazerLogin,
                   child: const Text(
                     "ENTRAR",
                     style: TextStyle(
@@ -171,8 +236,9 @@ class TelaLogin extends StatelessWidget{
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
+                  controller: emailController,
                   decoration: InputDecoration(
-                    labelText: "Usuário",
+                    labelText: "E-mail",
                     labelStyle: TextStyle(color: azulEscuro),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: azulEscuro),
@@ -192,6 +258,7 @@ class TelaLogin extends StatelessWidget{
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
+                  controller: senhaController,
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Senha",
@@ -220,12 +287,7 @@ class TelaLogin extends StatelessWidget{
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => TelaInicial()),
-                    );
-                  },
+                  onPressed: isLoading ? null : fazerLogin,
                   child: const Text(
                     "ENTRAR",
                     style: TextStyle(

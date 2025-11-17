@@ -1,104 +1,93 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'tela_inicial.dart';
-import 'tela_perfil.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
-class TelaDevolucao extends StatefulWidget{
+class TelaDevolucao extends StatefulWidget {
   const TelaDevolucao({super.key});
 
   @override
-  State<TelaDevolucao> createState() => _TelaDevolucao();
+  State<TelaDevolucao> createState() => _TelaDevolucaoState();
 }
-class _TelaDevolucao extends State<TelaDevolucao> {
-  
+
+class _TelaDevolucaoState extends State<TelaDevolucao> {
+  List instrumentos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    carregarInstrumentos();
+  }
+
+Future<void> carregarInstrumentos() async {
+  final prefs = await SharedPreferences.getInstance();
+  final token = prefs.getString("access_token");
+
+  final url = Uri.parse("http://127.0.0.1:8000/pedidos/listar_instrumentos");
+
+  final response = await http.get(url, headers: {
+    "Authorization": "Bearer $token",
+  });
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body) as List;
+
+    setState(() {
+      instrumentos = data.where((i) => i["status"] == "Em uso").toList();
+    });
+  } else {
+    print("Erro ao carregar instrumentos: ${response.statusCode}");
+  }
+}
+
+
+  Future<void> devolver(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("access_token");
+
+    final url = Uri.parse("http://127.0.0.1:8000/pedidos/devolver_instrumento/$id");
+
+    final response = await http.put(url, headers: {
+      "Authorization": "Bearer $token",
+    });
+
+    final data = json.decode(response.body);
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Instrumento devolvido!")),
+      );
+      carregarInstrumentos();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data["detail"] ?? "Erro ao devolver")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
+        title: const Text("Devolução"),
         backgroundColor: const Color(0xFF1A1780),
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            onPressed: () {}, 
-            icon: const Icon(Icons.account_circle_rounded, color: Colors.white),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(10),
-          child: Row(
-            children: const [
-              Expanded(child: ColoredBox(color: Colors.blue, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.green, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.red, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.yellow, child: SizedBox(height: 10))),
-              Expanded(child: ColoredBox(color: Colors.purple, child: SizedBox(height: 10))),
-            ],
-          ),
-        ),
       ),
-      drawer: Drawer(
-        backgroundColor: Color(0xFF1A1780),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.account_circle, color: Colors.white,),
-              title: const Text('Perfil', style: TextStyle(color: Colors.white),),
-              onTap: () {
-                setState(() {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TelaPerfil()));
-                });
+      body: instrumentos.isEmpty
+          ? const Center(child: Text("Nenhum instrumento em uso"))
+          : ListView.builder(
+              itemCount: instrumentos.length,
+              itemBuilder: (_, index) {
+                final item = instrumentos[index];
+                return ListTile(
+                  title: Text(item["nome"]),
+                  subtitle: Text("ID: ${item['id']} | Status: ${item['status']}"),
+                  trailing: ElevatedButton(
+                    onPressed: () => devolver(item["id"]),
+                    child: const Text("Devolver"),
+                  ),
+                );
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.house_rounded, color: Colors.white,),
-              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
-              onTap: () {
-                setState(() {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TelaInicial()));
-                });
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings, color: Colors.white,),
-              title: const Text('Configurações', style: TextStyle(color: Colors.white),),
-              onTap: () {
-              },
-            ),
-          ],
-        ),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          const Center(
-            child: Text(
-              "Devolução",
-              style: TextStyle(
-                color: Color(0xFF1A1780),
-                fontWeight: FontWeight.bold,
-                fontSize: 28,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Center(
-            child: Text(
-              "Nenhum item retirado no momento",
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

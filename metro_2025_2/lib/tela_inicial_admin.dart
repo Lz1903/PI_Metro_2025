@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:metro_2025_2/tela_cadastro_material.dart';
 import 'package:metro_2025_2/tela_estoque.dart';
+import 'tela_cadastro.dart';
+import 'tela_inicial.dart';
 import 'tela_perfil.dart';
+import 'tela_historico_retirada.dart';
 
 class TelaInicialAdmin extends StatefulWidget {
   const TelaInicialAdmin({super.key});
@@ -25,7 +27,11 @@ class _TelaInicialAdmin extends State<TelaInicialAdmin> {
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TelaPerfil()));
+            },
             icon: const Icon(Icons.account_circle_rounded, color: Colors.white),
           ),
         ],
@@ -60,12 +66,23 @@ class _TelaInicialAdmin extends State<TelaInicialAdmin> {
             ),
             ListTile(
               leading: const Icon(Icons.house_rounded, color: Colors.white,),
-              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
+              title: const Text('Tela Inicial Admin', style: TextStyle(color: Colors.white),),
               onTap: () {
                 setState(() {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => TelaInicialAdmin()));
+                });
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.house_rounded, color: Colors.white,),
+              title: const Text('Tela Inicial', style: TextStyle(color: Colors.white),),
+              onTap: () {
+                setState(() {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TelaInicial()));
                 });
               },
             ),
@@ -151,7 +168,7 @@ class _TelaInicialAdmin extends State<TelaInicialAdmin> {
                           onPressed: () {
                             Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => TelaCadastroMaterial()));
+                            MaterialPageRoute(builder: (context) => TelaCadastro()));
                           },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1A1780),
@@ -324,7 +341,7 @@ class _TelaInicialAdmin extends State<TelaInicialAdmin> {
                           onPressed: () {
                             Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => TelaCadastroMaterial()));
+                            MaterialPageRoute(builder: (context) => TelaCadastro()));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1A1780),
@@ -333,7 +350,7 @@ class _TelaInicialAdmin extends State<TelaInicialAdmin> {
                             ),
                           ),
                           child: const AutoSizeText(
-                            'Cadastro de Materiais',
+                            'Cadastro de itens',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -349,24 +366,34 @@ class _TelaInicialAdmin extends State<TelaInicialAdmin> {
                   ),
                 ),
                 Padding(padding: const EdgeInsets.all(16),
-                  child:Container(
-                    height: constraints.maxHeight * 0.25,
-                    width: constraints.maxWidth,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    padding: EdgeInsets.all(8),
-                    child: Text("Retiradas Recentes",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF1A1780),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                    ),
-                  ),
+                  child:SizedBox(
+                        height: constraints.maxHeight * 0.25,
+                        width: constraints.maxWidth,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => TelaHistorico()));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1A1780),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const AutoSizeText(
+                            'Histórico de Retiradas',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                            maxLines: 3,
+                            minFontSize: 5,
+                            stepGranularity: 0.1,
+                          ),
+                        ),
+                      ),
                 ),
               ],
             ),
