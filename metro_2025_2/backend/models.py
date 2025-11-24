@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float, F
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 
-db  = create_engine("sqlite:///banco.db")
+db = create_engine("sqlite:///banco.db")
 
 Base = declarative_base()
 
@@ -14,13 +14,13 @@ class Usuario(Base):
     email = Column("email", String, nullable=False)
     senha = Column("senha", String, nullable=False)
     admin = Column("admin", Boolean, nullable=False)
-    codigo = Column("codigo", String(7), unique=True, nullable= False)
+    codigo = Column("codigo", String(7), unique=True, nullable=False)
     time = Column("time", String, nullable=True)
 
     def __init__(self, nome, email, senha, admin, codigo, time=None):
         self.nome = nome
         self.email = email
-        self. senha = senha
+        self.senha = senha
         self.admin = admin
         self.codigo = codigo
         self.time = time
@@ -38,7 +38,7 @@ class Material(Base):
     tipo = Column("tipo", String, nullable=False)
     vencimento = Column("vencimento", DateTime)
 
-    def __init__(self, id, nome, quantidade, unidade, limite_minimo,local, status, tipo, vencimento):
+    def __init__(self, id, nome, quantidade, unidade, limite_minimo, local, status, tipo, vencimento):
         self.id = id
         self.nome = nome
         self.quantidade = quantidade
@@ -75,9 +75,20 @@ class Historico(Base):
     nome_item = Column(String, nullable=False)
     quantidade = Column(Integer, nullable=True)
     usuario = Column(String, nullable=False)
-    data_hora = Column(DateTime, default=lambda: datetime.now())
+    data_hora = Column(DateTime, default=datetime.now)
     tipo = Column(String, nullable=False)
+    
+    local = Column(String, nullable=True) 
+
+    def __init__(self, item_id, nome_item, usuario, tipo, quantidade=None, local=None):
+        self.item_id = item_id
+        self.nome_item = nome_item
+        self.quantidade = quantidade
+        self.usuario = usuario
+        self.tipo = tipo
+        self.local = local
+        self.data_hora = datetime.now()
 
 if __name__ == "__main__":
     Base.metadata.create_all(db)
-    print("Banco de dados e tabelas criados com sucesso!")
+    print("Banco de dados e tabelas criados (ou atualizados) com sucesso!")

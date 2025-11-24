@@ -8,6 +8,7 @@ import '../telas/visao_geral.dart';
 import '../telas/tela_retirada.dart';
 import '../telas/tela_devolucao.dart';
 import '../telas/tela_historico.dart';
+import '../telas/tela_movimentacao.dart';
 
 class MenuLateral extends StatelessWidget {
   const MenuLateral({super.key});
@@ -114,34 +115,35 @@ class MenuLateral extends StatelessWidget {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Container(
-    color: const Color(0xFF1A1780),
-    width: 300,
-    child: SizedBox.expand(
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-            _botao(context, Icons.house_rounded, "Visão Geral", const VisaoGeral()),
-            const SizedBox(height: 30),
-            _botao(context, Icons.people_alt, "Pessoas", const TelaPessoas()),
-            const SizedBox(height: 30),
-            _botao(context, Icons.category, "Estoque", const TelaEstoque()),
-            const SizedBox(height: 30),
-            _botao(context, Icons.move_up_rounded, "Retirada", const TelaRetirada()),
-            const SizedBox(height: 30),
-            _botao(context, Icons.move_down_rounded, "Devolução", const TelaDevolucao()),
-            const SizedBox(height: 30),
-            _botao(context, Icons.history, "Histórico", const TelaHistorico()),
-            const SizedBox(height: 30),
-            _logoutButton(context),
-            const SizedBox(height: 30),
-          ],
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF1A1780),
+      width: 300,
+      child: SizedBox.expand(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 30),
+              _botao(context, Icons.house_rounded, "Visão Geral", const VisaoGeral()),
+              const SizedBox(height: 30),
+              _botao(context, Icons.people_alt, "Pessoas", const TelaPessoas()),
+              const SizedBox(height: 30),
+              _botao(context, Icons.category, "Estoque", const TelaEstoque()),
+              const SizedBox(height: 30),
+              _botao(context, Icons.local_shipping, "Movimentação", const TelaMovimentacao()),
+              const SizedBox(height: 30),
+              _botao(context, Icons.move_up_rounded, "Retirada", const TelaRetirada()),
+              const SizedBox(height: 30),
+              _botao(context, Icons.move_down_rounded, "Devolução", const TelaDevolucao()),
+              const SizedBox(height: 30),
+              _botao(context, Icons.history, "Histórico", const TelaHistorico()),
+              const SizedBox(height: 30),
+              _logoutButton(context),
+              const SizedBox(height: 30),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
-

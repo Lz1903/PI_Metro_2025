@@ -39,3 +39,6 @@ class InstrumentoSchema(BaseModel):
     nome: str
     local: str
     calibracao: Optional[date] = None
+
+class TransferenciaSchema(BaseModel):
+    novo_local: str

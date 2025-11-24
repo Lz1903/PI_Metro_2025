@@ -60,7 +60,6 @@ class _TelaEstoque extends State<TelaEstoque> {
   final List<String> tiposMateriaisOpcoes = [
     "Consumo",
     "Giro",
-    "Patrimoniado",
   ];
 
   @override
@@ -256,7 +255,7 @@ class _TelaEstoque extends State<TelaEstoque> {
                 if (qtd == 0) {
                     statusMaterial = "Em Falta";
                 } else if (qtd <= limite) {
-                    statusMaterial = "Alerta Mínimo";
+                    statusMaterial = "Pouco Estoque";
                 }
             }
 
