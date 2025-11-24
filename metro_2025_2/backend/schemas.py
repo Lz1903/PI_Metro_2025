@@ -7,6 +7,8 @@ class UsuarioSchema(BaseModel):
     email: str
     senha: str
     admin: bool
+    codigo: str
+    time: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -15,6 +17,7 @@ class MaterialSchema(BaseModel):
     id: Optional[str]= None
     nome: Optional[str]= None
     quantidade: Optional[int]= None
+    unidade: Optional[str] = None
     limite_minimo: Optional[int]= None
     local: Optional[str]= None
     status: Optional[str] = None
@@ -35,4 +38,4 @@ class InstrumentoSchema(BaseModel):
     id: str
     nome: str
     local: str
-    calibracao: Optional[date]
+    calibracao: Optional[date] = None

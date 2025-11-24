@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float, ForeignKey, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
-#from sqlalchemy_utils.types import ChoiceType
 
 db  = create_engine("sqlite:///banco.db")
 
@@ -15,12 +14,16 @@ class Usuario(Base):
     email = Column("email", String, nullable=False)
     senha = Column("senha", String, nullable=False)
     admin = Column("admin", Boolean, nullable=False)
+    codigo = Column("codigo", String(7), unique=True, nullable= False)
+    time = Column("time", String, nullable=True)
 
-    def __init__(self, nome, email, senha, admin):
+    def __init__(self, nome, email, senha, admin, codigo, time=None):
         self.nome = nome
         self.email = email
         self. senha = senha
         self.admin = admin
+        self.codigo = codigo
+        self.time = time
 
 class Material(Base):
     __tablename__ = "materiais"
@@ -28,16 +31,18 @@ class Material(Base):
     id = Column("id", String, primary_key=True)
     nome = Column("nome", String, nullable=False)
     quantidade = Column("quantidade", Integer, nullable=False)
+    unidade = Column("unidade", String, nullable=False)
     limite_minimo = Column("limite_minimo", Integer, nullable=False)
     local = Column("local", String, nullable=False)
     status = Column("status", String)
     tipo = Column("tipo", String, nullable=False)
     vencimento = Column("vencimento", DateTime)
 
-    def __init__(self, id, nome, quantidade, limite_minimo,local, status, tipo, vencimento):
+    def __init__(self, id, nome, quantidade, unidade, limite_minimo,local, status, tipo, vencimento):
         self.id = id
         self.nome = nome
         self.quantidade = quantidade
+        self.unidade = unidade
         self.limite_minimo = limite_minimo
         self.local = local
         self.status = status
@@ -52,13 +57,15 @@ class Instrumento(Base):
     local = Column("local", String, nullable=False)
     status = Column("status", String, nullable=False)
     calibracao = Column("calibacao", DateTime)
+    usuario_id = Column("usuario_id", String, nullable=True)
 
-    def __init__(self, id, nome, local, status, calibracao):
+    def __init__(self, id, nome, local, status, calibracao, usuario_id=None):
         self.id = id
         self.nome = nome
         self.local = local
         self.status = status
         self.calibracao = calibracao
+        self.usuario_id = usuario_id
 
 class Historico(Base):
     __tablename__ = "historico"

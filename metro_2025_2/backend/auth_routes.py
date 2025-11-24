@@ -32,12 +32,33 @@ async def criar_conta(usuario_schema: UsuarioSchema, session: Session = Depends(
     usuario = session.query(Usuario).filter(Usuario.email==usuario_schema.email).first()
     if usuario:
         raise HTTPException(status_code=400, detail="E-mail do usuario já cadastrado")
-    else:
-        senha_cryptografada = bcrypt_context.hash(usuario_schema.senha)
-        novo_usuario = Usuario(usuario_schema.nome,usuario_schema.email, senha_cryptografada, usuario_schema.admin)
-        session.add(novo_usuario)
-        session.commit()
-        return {"mensagem": "usuario cadastrado com sucesso!"}
+    codigo_digitado = usuario_schema.codigo.strip()
+
+    if not codigo_digitado.isdigit() or len(codigo_digitado) != 6:
+        raise HTTPException(
+            status_code=400,
+            detail="O código deve possuir exatamente 6 dígitos numéricos"
+        )
+    codigo_final = f"r{codigo_digitado}"
+
+    codigo_existente = session.query(Usuario).filter(Usuario.codigo == codigo_final).first()
+    if codigo_existente:
+        raise HTTPException(status_code=400, detail="Já existe um usuário com este código.")
+    
+    senha_hash = bcrypt_context.hash(usuario_schema.senha)
+
+    novo_usuario = Usuario(
+        nome=usuario_schema.nome,
+        email=usuario_schema.email,
+        senha=senha_hash,
+        admin=usuario_schema.admin,
+        codigo=codigo_final,
+        time=usuario_schema.time
+    )
+    session.add(novo_usuario)
+    session.commit()
+
+    return {"mensagem": "Usuário cadastrado com sucesso"}
     
 @auth_router.post("/login")
 async def login(login_schema: LoginSchema, session: Session = Depends(pegar_sessao)):
@@ -62,3 +83,65 @@ async def use_refresh_token(usuario: Usuario = Depends(verificar_token)):
         "access_token": access_token,
         "token_type": "Bearer"
         }
+
+@auth_router.get("/listar_usuarios")
+async def listar_usuarios(session: Session = Depends(pegar_sessao), usuario: Usuario = Depends(verificar_token)):    
+    usuarios = session.query(Usuario).all()
+    
+    return [
+        {
+            "id": u.id,
+            "nome": u.nome,
+            "email": u.email,
+            "admin": u.admin,
+            "codigo": u.codigo,
+            "time": u.time if u.time else "Sem Equipe"
+        }
+        for u in usuarios
+    ]
+
+@auth_router.put("/editar_usuario/{id_usuario}")
+async def editar_usuario(
+    id_usuario: int, 
+    usuario_schema: UsuarioSchema, 
+    session: Session = Depends(pegar_sessao),
+    usuario_logado: Usuario = Depends(verificar_token)
+):
+    if not usuario_logado.admin:
+         raise HTTPException(status_code=403, detail="Apenas admins podem editar usuários")
+
+    usuario_alvo = session.query(Usuario).filter(Usuario.id == id_usuario).first()
+    
+    if not usuario_alvo:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    usuario_alvo.nome = usuario_schema.nome
+    usuario_alvo.email = usuario_schema.email
+    
+    if usuario_schema.senha and usuario_schema.senha != usuario_alvo.senha:
+         usuario_alvo.senha = bcrypt_context.hash(usuario_schema.senha)
+         
+    usuario_alvo.admin = usuario_schema.admin
+    usuario_alvo.codigo = usuario_schema.codigo
+    usuario_alvo.time = usuario_schema.time
+
+    session.commit()
+    return {"mensagem": "Usuário atualizado com sucesso"}
+
+@auth_router.delete("/excluir_usuario/{id_usuario}")
+async def excluir_usuario(
+    id_usuario: int, 
+    session: Session = Depends(pegar_sessao),
+    usuario_logado: Usuario = Depends(verificar_token)
+):
+    if not usuario_logado.admin:
+         raise HTTPException(status_code=403, detail="Apenas admins podem excluir usuários")
+
+    usuario_alvo = session.query(Usuario).filter(Usuario.id == id_usuario).first()
+    
+    if not usuario_alvo:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        
+    session.delete(usuario_alvo)
+    session.commit()
+    return {"mensagem": "Usuário excluído com sucesso"}
