@@ -61,7 +61,6 @@ class _TelaHistoricoState extends State<TelaHistorico> {
       final dataLocal = DateTime.parse(isoString).toLocal(); 
       return DateFormat('dd/MM/yyyy HH:mm:ss').format(dataLocal);
     } catch (e) {
-      print("Erro ao formatar data: $e para o valor: $dataString");
       return dataString;
     }
   }
@@ -97,9 +96,15 @@ class _TelaHistoricoState extends State<TelaHistorico> {
           final quantidade = item["quantidade"] != null ? (item["quantidade"] as num).toInt() : 0;
           
           String movimento;
-          if (item["tipo"]?.toString() == 'material') {
+          String local = item["local"]?.toString() ?? 'N/A';
+
+          if (local.contains("->")) {
+            movimento = "Transferência";
+          } 
+          else if (item["tipo"]?.toString() == 'material') {
               movimento = quantidade < 0 ? 'Retirada' : 'Devolução';
-          } else {
+          } 
+          else {
               movimento = quantidade != 0 ? 'Retirada' : 'Devolução';
           }
 
@@ -120,7 +125,7 @@ class _TelaHistoricoState extends State<TelaHistorico> {
             "quantidade": quantidade,
             "usuario": item["usuario"]?.toString() ?? 'N/A', 
             "tipo": item["tipo"]?.toString() ?? 'N/A', 
-            "local": item["local"]?.toString() ?? 'N/A',
+            "local": local,
             "data_hora": item["data_hora"]?.toString() ?? '', 
             "movimento": movimento,
             "timestamp_ms": parsedDate.millisecondsSinceEpoch,
@@ -206,7 +211,7 @@ class _TelaHistoricoState extends State<TelaHistorico> {
   Future<void> excluirMovimentacao(String idMovimentacao) async {
     String? token = await _getToken();
     if (token == null) {
-      _showSnackbar("Erro de autenticação. Tente fazer login novamente.", Colors.red);
+      _showSnackbar("Erro de autenticação.", Colors.red);
       return;
     }
 
@@ -220,13 +225,13 @@ class _TelaHistoricoState extends State<TelaHistorico> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        _showSnackbar("Movimentação ID $idMovimentacao excluída com sucesso.", Colors.green);
+        _showSnackbar("Movimentação ID $idMovimentacao excluída.", Colors.green);
         await carregarHistorico();
       } else {
-        _showSnackbar("Erro ao excluir. Status: ${response.statusCode}. Detalhe: ${response.body}", Colors.red);
+        _showSnackbar("Erro ao excluir: ${response.statusCode}", Colors.red);
       }
     } catch (e) {
-      _showSnackbar("Erro de conexão ao excluir: $e", Colors.red);
+      _showSnackbar("Erro de conexão: $e", Colors.red);
     }
   }
 
@@ -236,22 +241,20 @@ class _TelaHistoricoState extends State<TelaHistorico> {
       builder: (BuildContext confirmationContext) {
         return AlertDialog(
           title: const Text("Confirmar Exclusão"),
-          content: Text("Tem certeza que deseja excluir a movimentação ${item["id_movimentacao"]}? Esta ação é irreversível."),
+          content: Text("Excluir movimentação ${item["id_movimentacao"]}?"),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancelar'),
-              onPressed: () {
-                Navigator.of(confirmationContext).pop();
-              },
+              onPressed: () => Navigator.of(confirmationContext).pop(),
             ),
             ElevatedButton(
-              child: const Text('Excluir', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () async {
                 Navigator.of(confirmationContext).pop();
                 Navigator.of(detailsDialogContext).pop(); 
                 await excluirMovimentacao(item["id_movimentacao"]);
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Excluir', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -264,34 +267,30 @@ class _TelaHistoricoState extends State<TelaHistorico> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text("Detalhes da Movimentação (${item["id_movimentacao"]})"),
+          title: Text("Detalhes (${item["id_movimentacao"]})"),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
-                _buildDetailRow('Nome do Item:', item["nome_item"].toString()),
-                _buildDetailRow('ID do Item:', item["item_id"].toString()),
+                _buildDetailRow('Item:', item["nome_item"].toString()),
+                _buildDetailRow('ID Item:', item["item_id"].toString()),
                 _buildDetailRow('Tipo:', item["tipo"].toString()),
                 _buildDetailRow('Movimento:', item["movimento"].toString()),
-                _buildDetailRow('Quantidade:', item["quantidade"].abs().toString()),
+                _buildDetailRow('Qtd:', item["quantidade"].abs().toString()),
                 _buildDetailRow('Usuário:', item["usuario"].toString()),
-                _buildDetailRow('Data/Hora:', _formatarDataHora(item["data_hora"].toString())),
-                _buildDetailRow('Local:', item["local"]?.toString() ?? 'N/A'),
+                _buildDetailRow('Data:', _formatarDataHora(item["data_hora"].toString())),
+                _buildDetailRow('Local:', item["local"].toString()),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
               child: const Text('Fechar'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton.icon(
               icon: const Icon(Icons.delete, color: Colors.white),
               label: const Text('Excluir', style: TextStyle(color: Colors.white)),
-              onPressed: () {
-                showConfirmationDialog(item, dialogContext);
-              },
+              onPressed: () => showConfirmationDialog(item, dialogContext),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             ),
           ],
@@ -315,6 +314,61 @@ class _TelaHistoricoState extends State<TelaHistorico> {
     );
   }
 
+  Widget _buildSearchField() {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black),
+      ),
+      child: TextField(
+        controller: pesquisaController,
+        decoration: const InputDecoration(
+          prefixIcon: Icon(Icons.search),
+          hintText: "Pesquisar item ou ID",
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 15),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownFilter(String label, String value, List<String> items, ValueChanged<String?> onChanged) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      isExpanded: true,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+        labelText: label,
+      ),
+      items: items.map((String val) {
+        return DropdownMenuItem<String>(
+          value: val,
+          child: Text(val, overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildDateButton(String label, DateTime? date, bool isInicial) {
+    return OutlinedButton.icon(
+      onPressed: () => _selecionarData(context, isInicial),
+      icon: const Icon(Icons.calendar_today, size: 18),
+      label: Text(
+        date == null ? label : DateFormat('dd/MM/yy').format(date),
+        style: const TextStyle(fontSize: 12),
+        overflow: TextOverflow.ellipsis,
+      ),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 15),
+        minimumSize: const Size(0, 50),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     pesquisaController.dispose();
@@ -323,7 +377,7 @@ class _TelaHistoricoState extends State<TelaHistorico> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
+    final isMobile = MediaQuery.of(context).size.width < 850;
 
     return Scaffold(
       key: _scaffoldKey,
@@ -363,237 +417,181 @@ class _TelaHistoricoState extends State<TelaHistorico> {
           ),
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Row(
-            children: [
-              if (!isMobile) const SizedBox(width: 250, child: MenuLateral()),
-              
-              Expanded(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 15),
-                    const Center(
-                      child: Text(
-                        "Histórico de Movimentações",
-                        style: TextStyle(
-                          color: Color(0xFF1A1780),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 28,
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isMobile) const SizedBox(width: 250, child: MenuLateral()),
+          
+          Expanded(
+            child: Column(
+              children: [
+                const SizedBox(height: 15),
+                Center(
+                  child: Text(
+                    "Histórico de Movimentações",
+                    style: TextStyle(
+                      color: const Color(0xFF1A1780),
+                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 22 : 28,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: isMobile 
+                  ? Column(
+                      children: [
+                        _buildSearchField(),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDropdownFilter("Movimento", filtroMovimento, ['Todos', 'Retirada', 'Devolução', 'Transferência'], (val) {
+                                setState(() { filtroMovimento = val!; _aplicarFiltros(); });
+                              }),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _buildDropdownFilter("Tipo", filtroTipoItem, ['Todos', 'material', 'instrumento'], (val) {
+                                setState(() { filtroTipoItem = val!; _aplicarFiltros(); });
+                              }),
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            flex: 3, 
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 10),
-                              child: Container(
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.black),
-                                ),
-                                child: TextField(
-                                  controller: pesquisaController,
-                                  decoration: const InputDecoration(
-                                    prefixIcon: Icon(Icons.search),
-                                    hintText: "Pesquisar item ou ID",
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(vertical: 15),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          
-                          const SizedBox(width: 10),
-                          
-                          Expanded(
-                            flex: 1, 
-                            child: DropdownButtonFormField<String>(
-                              value: filtroMovimento,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                                labelText: "Movimento",
-                              ),
-                              items: ['Todos', 'Retirada', 'Devolução'].map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(child: _buildDateButton('Data Inic.', filtroDataInicial, true)),
+                            const SizedBox(width: 10),
+                            Expanded(child: _buildDateButton('Data Final', filtroDataFinal, false)),
+                            const SizedBox(width: 10),
+                            IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.red),
+                              onPressed: () {
                                 setState(() {
-                                  filtroMovimento = newValue!;
+                                  pesquisaController.clear();
+                                  filtroMovimento = 'Todos';
+                                  filtroTipoItem = 'Todos';
+                                  filtroDataInicial = null;
+                                  filtroDataFinal = null;
                                   _aplicarFiltros();
                                 });
                               },
                             ),
-                          ),
-                          
-                          const SizedBox(width: 10),
-                          
-                          Expanded(
-                            flex: 1, 
-                            child: DropdownButtonFormField<String>(
-                              value: filtroTipoItem,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                                labelText: "Tipo",
-                              ),
-                              items: const [
-                                DropdownMenuItem(value: 'Todos', child: Text('Todos')),
-                                DropdownMenuItem(value: 'material', child: Text('Material')),
-                                DropdownMenuItem(value: 'instrumento', child: Text('Instrumento')),
-                              ],
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  filtroTipoItem = newValue!;
-                                  _aplicarFiltros();
-                                });
-                              },
-                            ),
-                          ),
-                          
-                          const SizedBox(width: 10),
-                          
-                          Expanded(
-                            flex: 1, 
-                            child: OutlinedButton.icon(
-                              onPressed: () => _selecionarData(context, true),
-                              icon: const Icon(Icons.calendar_today, size: 18),
-                              label: Text(
-                                filtroDataInicial == null
-                                    ? 'Data Inic.'
-                                    : DateFormat('dd/MM/yy').format(filtroDataInicial!),
-                              ),
-                            ),
-                          ),
-                          
-                          const SizedBox(width: 5),
-                          
-                          Expanded(
-                            flex: 1, 
-                            child: OutlinedButton.icon(
-                              onPressed: () => _selecionarData(context, false),
-                              icon: const Icon(Icons.calendar_today, size: 18),
-                              label: Text(
-                                filtroDataFinal == null
-                                    ? 'Data Final'
-                                    : DateFormat('dd/MM/yy').format(filtroDataFinal!),
-                              ),
-                            ),
-                          ),
-                          
-                          const SizedBox(width: 5),
-                          
-                          IconButton(
-                            icon: const Icon(Icons.clear, color: Colors.red),
-                            onPressed: () {
-                              setState(() {
-                                pesquisaController.clear();
-                                filtroMovimento = 'Todos';
-                                filtroTipoItem = 'Todos';
-                                filtroDataInicial = null;
-                                filtroDataFinal = null;
-                                _aplicarFiltros();
-                              });
-                            },
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        Expanded(flex: 3, child: _buildSearchField()),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 1, 
+                          child: _buildDropdownFilter("Movimento", filtroMovimento, ['Todos', 'Retirada', 'Devolução', 'Transferência'], (val) {
+                            setState(() { filtroMovimento = val!; _aplicarFiltros(); });
+                          }),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 1, 
+                          child: _buildDropdownFilter("Tipo", filtroTipoItem, ['Todos', 'material', 'instrumento'], (val) {
+                            setState(() { filtroTipoItem = val!; _aplicarFiltros(); });
+                          }),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(flex: 1, child: _buildDateButton('Início', filtroDataInicial, true)),
+                        const SizedBox(width: 5),
+                        Expanded(flex: 1, child: _buildDateButton('Fim', filtroDataFinal, false)),
+                        const SizedBox(width: 5),
+                        IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              pesquisaController.clear();
+                              filtroMovimento = 'Todos';
+                              filtroTipoItem = 'Todos';
+                              filtroDataInicial = null;
+                              filtroDataFinal = null;
+                              _aplicarFiltros();
+                            });
+                          },
+                        ),
+                      ],
                     ),
-                    
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : errorMessage != null
-                                ? Center(
-                                    child: Text(
-                                      errorMessage!,
-                                      style: const TextStyle(color: Colors.red),
-                                    ),
-                                  )
-                                : listaFiltrada.isEmpty
-                                    ? const Center(child: Text("Nenhuma movimentação encontrada com os filtros aplicados."))
-                                    : SingleChildScrollView(
-                                        scrollDirection: Axis.vertical,
-                                        child: Center(
-                                          child: SingleChildScrollView(
-                                            scrollDirection: Axis.horizontal,
-                                            child: Container(
-                                              width: isMobile ? 1000 : 1100, 
-                                              decoration: BoxDecoration(
-                                                border: Border.all(color: Colors.black, width: 1),
-                                              ),
-                                              child: DataTable(
-                                                headingRowColor: MaterialStateProperty.all(const Color(0xFF1A1780)),
-                                                headingTextStyle: const TextStyle(color: Colors.white),
-                                                columnSpacing: 15,
-                                                showCheckboxColumn: false,
-                                                columns: const [
-                                                  DataColumn(label: Text("ID Mov.")),
-                                                  DataColumn(label: Text("ID Item")),
-                                                  DataColumn(label: Text("Item")),
-                                                  DataColumn(label: Text("Tipo")),
-                                                  DataColumn(label: Text("Movimento")),
-                                                  DataColumn(label: Text("Qtd")),
-                                                  DataColumn(label: Text("Usuário")),
-                                                  DataColumn(label: Text("Data/Hora")),
-                                                ],
-                                                rows: listaFiltrada.map((item) {
-                                                  return DataRow(
-                                                    onSelectChanged: (isSelected) {
-                                                      if (isSelected != null && isSelected) {
-                                                        showDetailsDialog(item);
-                                                      }
-                                                    },
-                                                    cells: [
-                                                      DataCell(Text(item["id_movimentacao"].toString())),
-                                                      DataCell(Text(item["item_id"].toString())),
-                                                      DataCell(Text(item["nome_item"].toString())),
-                                                      DataCell(Text(item["tipo"].toString())),
-                                                      DataCell(Text(item["movimento"].toString())),
-                                                      DataCell(
-                                                        Text(
-                                                          item["quantidade"] != null && item["quantidade"] != 0 
-                                                              ? item["quantidade"].abs().toString()
-                                                              : "-",
-                                                          style: const TextStyle(
-                                                              fontWeight: FontWeight.bold,
-                                                              color: Colors.black,
-                                                          ),
-                                                        )
-                                                      ),
-                                                      DataCell(Text(item["usuario"].toString())), 
-                                                      DataCell(Text(_formatarDataHora(item["data_hora"].toString()))),
-                                                    ],
-                                                  );
-                                                }).toList(),
-                                              ),
-                                            ),
-                                          ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : errorMessage != null
+                            ? Center(child: Text(errorMessage!, style: const TextStyle(color: Colors.red)))
+                            : listaFiltrada.isEmpty
+                                ? const Center(child: Text("Nenhuma movimentação encontrada."))
+                                : SingleChildScrollView(
+                                    scrollDirection: Axis.vertical,
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: Container(
+                                        width: isMobile ? 1000 : 1200, 
+                                        decoration: BoxDecoration(
+                                          border: Border.all(color: Colors.black, width: 1),
+                                        ),
+                                        child: DataTable(
+                                          headingRowColor: MaterialStateProperty.all(const Color(0xFF1A1780)),
+                                          headingTextStyle: const TextStyle(color: Colors.white),
+                                          columnSpacing: 15,
+                                          showCheckboxColumn: false,
+                                          columns: const [
+                                            DataColumn(label: Text("ID Mov.")),
+                                            DataColumn(label: Text("ID Item")),
+                                            DataColumn(label: Text("Item")),
+                                            DataColumn(label: Text("Tipo")),
+                                            DataColumn(label: Text("Movimento")),
+                                            DataColumn(label: Text("Qtd")),
+                                            DataColumn(label: Text("Usuário")),
+                                            DataColumn(label: Text("Data/Hora")),
+                                            DataColumn(label: Text("Local")),
+                                          ],
+                                          rows: listaFiltrada.map((item) {
+                                            return DataRow(
+                                              onSelectChanged: (isSelected) {
+                                                if (isSelected != null && isSelected) {
+                                                  showDetailsDialog(item);
+                                                }
+                                              },
+                                              cells: [
+                                                DataCell(Text(item["id_movimentacao"].toString())),
+                                                DataCell(Text(item["item_id"].toString())),
+                                                DataCell(Text(item["nome_item"].toString())),
+                                                DataCell(Text(item["tipo"].toString())),
+                                                DataCell(Text(item["movimento"].toString())),
+                                                DataCell(
+                                                  Text(
+                                                    item["quantidade"] != null && item["quantidade"] != 0 
+                                                        ? item["quantidade"].abs().toString()
+                                                        : "-",
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                                                  )
+                                                ),
+                                                DataCell(Text(item["usuario"].toString())), 
+                                                DataCell(Text(_formatarDataHora(item["data_hora"].toString()))),
+                                                DataCell(Text(item["local"].toString())), 
+                                              ],
+                                            );
+                                          }).toList(),
                                         ),
                                       ),
-                      ),
-                    ),
-                  ],
+                                    ),
+                                  ),
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

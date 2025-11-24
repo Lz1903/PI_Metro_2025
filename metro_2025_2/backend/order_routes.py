@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from schemas import MaterialSchema, InstrumentoSchema
+from schemas import MaterialSchema, InstrumentoSchema, TransferenciaSchema
 from sqlalchemy.orm import Session
 from dependencies import pegar_sessao, verificar_token
 from models import Material, Instrumento, Usuario, Historico
@@ -108,6 +108,7 @@ async def editar_material(
     if not material:
         raise HTTPException(status_code=404, detail="Material não encontrado")
 
+    # Atualiza todos os campos
     material.nome = material_schema.nome
     material.quantidade = material_schema.quantidade
     material.unidade = material_schema.unidade
@@ -115,6 +116,8 @@ async def editar_material(
     material.tipo = material_schema.tipo
     material.vencimento = material_schema.vencimento
     material.limite_minimo = material_schema.limite_minimo
+    
+    # Recalcula status
     material.status = definir_status(material.quantidade, material.limite_minimo)
 
     session.commit()
@@ -138,16 +141,19 @@ async def retirar_material(
     if material.quantidade < quantidade:
         raise HTTPException(status_code=400, detail="Saldo insuficiente")
 
+    # Subtrai
     material.quantidade -= quantidade
 
+    # Atualiza status automaticamente
     material.status = definir_status(material.quantidade, material.limite_minimo)
 
     registro = Historico(
-    item_id=material.id,
-    nome_item=material.nome,
-    quantidade=quantidade,
-    usuario=usuario.nome, 
-    tipo="material"
+        item_id=material.id,
+        nome_item=material.nome,
+        quantidade=quantidade, # Valor positivo indica retirada no histórico, mas diminuimos do saldo
+        usuario=usuario.nome, 
+        tipo="material",
+        local=material.local # Registra o local do material
     )
     session.add(registro)
 
@@ -176,14 +182,15 @@ async def retirar_instrumento(
         raise HTTPException(status_code=400, detail="Este instrumento já está em uso")
 
     instrumento.status = "Em uso"
-    instrumento.usuario_id = usuario.id
+    instrumento.usuario_id = str(usuario.id) # Salva o ID como string
 
     registro = Historico(
         item_id=instrumento.id,
         nome_item=instrumento.nome,
         quantidade=None,
         usuario=usuario.nome,
-        tipo="instrumento"
+        tipo="instrumento",
+        local=instrumento.local # Registra de onde saiu
     )
 
     session.add(registro)
@@ -197,7 +204,6 @@ async def retirar_instrumento(
     }
 
 
-
 @order_router.put("/devolver_instrumento/{id}")
 async def devolver_instrumento(id: str, session: Session = Depends(pegar_sessao), usuario: Usuario = Depends(verificar_token)):
     instrumento = session.query(Instrumento).filter(Instrumento.id == id).first()
@@ -205,6 +211,7 @@ async def devolver_instrumento(id: str, session: Session = Depends(pegar_sessao)
     if not instrumento:
         raise HTTPException(status_code=404, detail="Instrumento não encontrado")
     
+    # Verificação de segurança
     if instrumento.usuario_id is not None:
         if str(instrumento.usuario_id) != str(usuario.id):
             if not usuario.admin:
@@ -222,6 +229,7 @@ async def devolver_instrumento(id: str, session: Session = Depends(pegar_sessao)
         quantidade=0,
         usuario=usuario.nome,
         tipo="instrumento",
+        local=instrumento.local # Registra onde foi devolvido
     )
     session.add(registro)
 
@@ -246,6 +254,7 @@ async def listar_historico(session: Session = Depends(pegar_sessao), usuario: Us
             "quantidade": h.quantidade,
             "usuario": h.usuario,
             "tipo": h.tipo,
+            "local": h.local, # Retorna o local gravado no histórico
             "data_hora": h.data_hora.isoformat() if h.data_hora else None 
         }
         for h in historico
@@ -266,13 +275,48 @@ async def editar_instrumento(
     if not instrumento:
         raise HTTPException(status_code=404, detail="Instrumento não encontrado")
 
-    # Atualiza os campos
     instrumento.nome = instrumento_schema.nome
     instrumento.local = instrumento_schema.local
     instrumento.calibracao = instrumento_schema.calibracao
     
     session.commit()
     return {"mensagem": "Instrumento atualizado com sucesso!"}
+
+# NOVA ROTA: TRANSFERÊNCIA
+@order_router.put("/transferir_instrumento/{id_instrumento}")
+async def transferir_instrumento(
+    id_instrumento: str,
+    dados: TransferenciaSchema,
+    session: Session = Depends(pegar_sessao),
+    usuario: Usuario = Depends(verificar_token)
+):
+    if not usuario.admin:
+        raise HTTPException(status_code=403, detail="Apenas administradores podem transferir instrumentos.")
+
+    instrumento = session.query(Instrumento).filter(Instrumento.id == id_instrumento).first()
+    
+    if not instrumento:
+        raise HTTPException(status_code=404, detail="Instrumento não encontrado")
+    
+    if instrumento.status == "Em uso":
+        raise HTTPException(status_code=400, detail="Não é possível transferir um instrumento que está em uso. Devolva-o primeiro.")
+
+    local_antigo = instrumento.local
+    instrumento.local = dados.novo_local
+    
+    registro = Historico(
+        item_id=instrumento.id,
+        nome_item=instrumento.nome,
+        quantidade=0, 
+        usuario=usuario.nome,
+        tipo="instrumento",
+        local=f"{local_antigo} -> {dados.novo_local}" # Registra a mudança
+    )
+    
+    session.add(registro)
+    session.commit()
+    
+    return {"mensagem": f"Instrumento transferido de {local_antigo} para {dados.novo_local} com sucesso!"}
 
 @order_router.delete("/movimentacao/{id_movimentacao}")
 async def excluir_movimentacao(
@@ -292,7 +336,6 @@ async def excluir_movimentacao(
     session.commit()
     
     return {"mensagem": f"Registro de movimentação ID {id_movimentacao} excluído com sucesso"}
-
 
 @order_router.delete("/excluir_material/{id_material}")
 async def excluir_material(
@@ -329,8 +372,6 @@ async def excluir_instrumento(
     session.delete(instrumento)
     session.commit()
     return {"mensagem": "Instrumento excluído com sucesso"}
-
-
 
 @order_router.get("/alertas")
 async def buscar_alertas(session: Session = Depends(pegar_sessao), usuario: Usuario = Depends(verificar_token)):
